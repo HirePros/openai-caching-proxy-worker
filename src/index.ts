@@ -4,7 +4,7 @@ import { handleProxy } from './proxy';
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const { pathname } = new URL(request.url);
-    const ttlString = request.headers.get('X-Proxy-TTL');
+    const ttlString = request.headers.get('X-Proxy-TTL') || '86400';
 
     // Currently API usage only incurs costs for POST requests, and these also
     // tend to be the slowest. It may not be desirable to cache GET requests.

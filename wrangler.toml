@@ -18,6 +18,11 @@ compatibility_date = "2022-12-11"
 # To use workers KV,
 # 1. Run `wrangler kv:namespace create <YOUR_NAMESPACE>` in your terminal
 # 2. Uncomment following config and fill in <YOUR_ID>:
-# kv_namespaces = [
-#    { binding = "OPENAI_CACHE", id = "<YOUR_ID>" }
-# ]
+kv_namespaces = [
+   { binding = "OPENAI_CACHE", id = "deda714907f54fa88a1af9de6e558ebc", preview_id = "da60fe54aba544babad55db95d2b1e71" }
+]
+
+routes = [
+	{ pattern = "proxy-hxvens.hirepros.ai", zone_id = "793f74f703991042eb3a2106788110ff", custom_domain = true },
+	{ pattern = "proxy-hxvens.kerplunk.com", zone_id = "80a2564ec3e1038c36fd0e5d6209a948", custom_domain = true }
+]
