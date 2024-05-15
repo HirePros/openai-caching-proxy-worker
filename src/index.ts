@@ -10,7 +10,8 @@ export default {
     // tend to be the slowest. It may not be desirable to cache GET requests.
     const isProxyRequest =
       request.method === 'POST' &&
-      request.headers.get('content-type') === 'application/json' &&
+      (request.headers.get('content-type')?.includes('application/json') ||
+       request.headers.get('content-type')?.includes('multipart/form-data')) &&
       ttlString !== '0';
 
     if (isProxyRequest) {

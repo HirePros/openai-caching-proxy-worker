@@ -33,6 +33,8 @@ interface GetCacheKeyProps {
   path: string;
   authHeader: string | null;
   body: string | null;
+  contentType: string | null;
+  fileNameHeader: string | null;
 }
 
 export const getCacheKey = async (props: GetCacheKeyProps): Promise<string> => {
@@ -42,24 +44,28 @@ export const getCacheKey = async (props: GetCacheKeyProps): Promise<string> => {
     let propValue = (props as any)[key];
     if (key === 'body' && propValue !== '') {
       try {
-        const body = JSON.parse(propValue);
-        const sortedBody: AnyObject = {};
-        const sortedKeys = Object.keys(body).sort();
-        sortedKeys.forEach((key) => {
-          if (typeof body[key] === 'object' && !Array.isArray(body[key])) {
-            sortedBody[key] = sortObjectKeys(body[key]);
-          } else if (Array.isArray(body[key])) {
-            sortedBody[key] = body[key].map((item: any) => {
-              if (typeof item === 'object' && !Array.isArray(item)) {
-                return sortObjectKeys(item);
-              }
-              return item;
-            });
-          } else {
-            sortedBody[key] = body[key];
-          }
-        });
-        propValue = JSON.stringify(sortedBody);
+        if (props.contentType?.includes('multipart/form-data')) {
+          propValue = props.fileNameHeader;
+        } else {
+          const body = JSON.parse(propValue);
+          const sortedBody: AnyObject = {};
+          const sortedKeys = Object.keys(body).sort();
+          sortedKeys.forEach((key) => {
+            if (typeof body[key] === 'object' && !Array.isArray(body[key])) {
+              sortedBody[key] = sortObjectKeys(body[key]);
+            } else if (Array.isArray(body[key])) {
+              sortedBody[key] = body[key].map((item: any) => {
+                if (typeof item === 'object' && !Array.isArray(item)) {
+                  return sortObjectKeys(item);
+                }
+                return item;
+              });
+            } else {
+              sortedBody[key] = body[key];
+            }
+          });
+          propValue = JSON.stringify(sortedBody);
+        }
       } catch (_error) {
         propValue = '';
       }
@@ -69,6 +75,9 @@ export const getCacheKey = async (props: GetCacheKeyProps): Promise<string> => {
     }
     return _acc;
   }, {});
+  if (props.contentType?.includes('multipart/form-data')) {
+    delete (propsWithoutUndefined as Record<string, any>).contentType;
+  }
   const hash = objectHash(propsWithoutUndefined);
   return hash;
 };

@@ -20,14 +20,24 @@ export const handleProxy = async ({
   const fetchPath = pathname.replace(/^\/proxy/, '');
   const fetchUrl = `https://api.openai.com/v1${fetchPath}`;
   const fetchHeaders = getHeadersAsObject(request.headers);
-  const fetchBody = await request.text();
   const forceRefresh = request.headers.get('X-Proxy-Refresh') === 'true';
+  const contentType = request.headers.get('content-type') || '';
+  const fileNameHeader = request.headers.get('X-File-Name') || '';
+
+  let fetchBody: any;
+  if (contentType.includes('multipart/form-data')) {
+    fetchBody = await request.formData();
+  } else {
+    fetchBody = await request.text();
+  }
 
   const cacheKey = await getCacheKey({
     authHeader: request.headers.get('authorization'),
+    contentType: contentType,
     body: fetchBody,
     method: fetchMethod,
     path: fetchPath,
+    fileNameHeader: fileNameHeader
   });
   const responseCache = new ResponseCache({ env });
 
@@ -43,11 +53,24 @@ export const handleProxy = async ({
 
   console.log('No cached response found. Proxying and caching response instead.');
 
-  const response = await fetch(fetchUrl, {
-    method: fetchMethod,
-    headers: fetchHeaders,
-    body: fetchBody || null,
-  });
+  let response: Response;
+  if (contentType.includes('multipart/form-data')) {
+    // Remove 'content-type' header from fetchHeaders if it exists
+    if (fetchHeaders['content-type']) {
+      delete fetchHeaders['content-type'];
+    }
+    response = await fetch(fetchUrl, {
+      method: fetchMethod,
+      headers: fetchHeaders,
+      body: fetchBody,
+    });
+  } else {
+    response = await fetch(fetchUrl, {
+      method: fetchMethod,
+      headers: fetchHeaders,
+      body: fetchBody || null,
+    });
+  }
 
   if (response.ok) {
     console.log('Writing 2xx response to cache: ', { cacheKey, ttl });
@@ -64,3 +87,4 @@ export const handleProxy = async ({
 
   return response;
 };
+
